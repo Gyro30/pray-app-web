@@ -1,0 +1,1 @@
+export const config=Object.freeze({"url": "https://duhfkkohhesiagwwzpqc.supabase.co", "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1aGZra29oaGVzaWFnd3d6cHFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyMzU5ODcsImV4cCI6MjA3NjgxMTk4N30.5uiYlAxVqV0xLueGPp-imX5G365-u9J9xu6QEfwmZTY"});
