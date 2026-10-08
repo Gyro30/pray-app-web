@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src https://duhfkkohhesiagwwzpqc.supabase.co; base-uri 'none'; form-action 'none'; object-src 'none'">
+<title>Pray · Administración</title><link rel="icon" href="../pray-icon.png"><link rel="stylesheet" href="../legal.css"><link rel="stylesheet" href="admin.css">
+<script type="module" src="admin.js"></script></head><body>
+<a class="skip" href="#main">Saltar al contenido</a>
+<header class="site-header"><a class="brand" href="../index.html"><img src="../pray-icon.png" width="44" height="44" alt=""><span>Pray<small>Administración</small></span></a><button id="logout" hidden>Cerrar sesión</button></header>
+<main id="main" class="portal">
+<p class="eyebrow">Cuidar la comunidad</p><h1>Un espacio para acompañar Pray.</h1>
+<p id="status" role="status" aria-live="polite"></p>
+<section id="login" class="login-card"><h2>Acceso autorizado</h2><p>Ingresa con tu cuenta de Pray. El acceso depende de los permisos asignados por el propietario.</p>
+<form id="login-form"><label>Correo<input id="email" type="email" autocomplete="username" required maxlength="254"></label>
+<label>Contraseña<input id="password" type="password" autocomplete="current-password" required></label><button type="submit">Ingresar</button></form>
+<p class="small">La sesión permanece solo en esta pestaña y se cierra tras 15 minutos sin actividad.</p></section>
+<div id="workspace" hidden><div class="toolbar"><p id="identity"></p><button id="refresh" class="secondary">Actualizar</button></div>
+<nav id="tabs" class="tabs" aria-label="Secciones administrativas"></nav>
+<section id="panel" aria-live="polite"></section></div>
+</main><footer class="site-footer"><p>Los datos de los casos son privados. Revisa solo lo necesario para aplicar las reglas de comunidad.</p><a href="../privacy.html">Privacidad</a></footer>
+</body></html>
