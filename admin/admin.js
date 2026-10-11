@@ -1,9 +1,10 @@
 import {config} from "../config.js";
 import {PortalApi,errorText} from "../portal-api.js";
+import {renderCases,operationalControls,renderAnnouncements} from "./admin-operations.js";
 const api=new PortalApi(config),$=id=>document.getElementById(id);
 let access=null,section=null,generation=0,lastActivity=Date.now(),busy=false;
-const labels={moderation:"Revisiones",analytics:"Métricas",runtime:"Configuración",users:"Usuarios",premium_grants:"Premium",access:"Permisos",audit:"Actividad"};
-const permissions={moderation:"Revisar denuncias",analytics:"Ver analíticas",runtime:"Cambiar configuración",users:"Suspender y eliminar usuarios",premium_grants:"Conceder Premium perpetuo"};
+const labels={moderation:"Revisiones",analytics:"Métricas",runtime:"Configuración",users:"Usuarios",premium_grants:"Premium",access:"Permisos",audit:"Actividad",announcements:"Avisos"};
+const permissions={moderation:"Revisar denuncias",analytics:"Ver analíticas",runtime:"Cambiar configuración",users:"Suspender y eliminar usuarios",premium_grants:"Conceder Premium perpetuo",announcements:"Publicar avisos oficiales"};
 const can=p=>access?.is_owner||access?.permissions.includes(p);
 const message=(text,error=false)=>{$("status").textContent=text;$("status").dataset.error=String(error);};
 function node(tag,text,className){const n=document.createElement(tag);if(text!==undefined)n.textContent=String(text);if(className)n.className=className;return n;}
@@ -40,14 +41,25 @@ async function load(id){
  try{
   access=await api.rpc("get_admin_access");if(current!==generation)return;tabs();
   const area=section;let data;
-  if(area==="moderation")data=await Promise.all([api.rpc("get_content_moderation_queue"),api.rpc("get_user_moderation_queue")]);
+  if(area==="moderation"){
+   try{data=await api.rpc("admin_get_moderation_cases",{p_limit:40,p_offset:0});}
+   catch(e){if(e.message!=="SERVICE_NOT_DEPLOYED")throw e;data=await Promise.all([api.rpc("get_content_moderation_queue"),api.rpc("get_user_moderation_queue")]);}
+  }
   else if(area==="analytics")data=await api.rpc("get_product_metrics");
-  else if(area==="runtime")data=await api.rpc("get_runtime_config");
+  else if(area==="runtime"){
+   try{data=await api.rpc("admin_get_runtime_management");}
+   catch(e){if(e.message!=="SERVICE_NOT_DEPLOYED")throw e;data=await api.rpc("get_runtime_config");}
+  }
+  else if(area==="announcements")data=await api.rpc("admin_get_announcements");
   else if(area==="audit")data=await api.rpc("admin_get_audit");
   else data=await api.rpc("admin_find_users");
   if(current!==generation)return;
   message("");
-  if(area==="moderation")renderModeration(data,current);
+  if(area==="moderation"){
+   if(Array.isArray(data[0]))renderModeration(data,current);
+   else renderCases(data,operationContext(current));
+  }
+  else if(area==="announcements")renderAnnouncements(data,operationContext(current));
   else if(area==="analytics")renderMetrics(data);
   else if(area==="runtime")renderRuntime(data);
   else if(area==="audit")renderAudit(data);
@@ -109,7 +121,14 @@ function renderMetrics(data){
  if(!events.children.length)events.append(node("li","Aún no hay eventos compartidos."));
  panel.append(events,node("p","Los fallos y ANR del conjunto de instalaciones se revisan en Android vitals de Google Play.","muted"));
 }
-function renderRuntime(data){
+function operationContext(current=generation){
+ const epoch=api.epoch;
+ return {api,panel:$("panel"),node,button,card,field,select,check,message,date,action,
+  isCurrent:()=>current===generation&&epoch===api.epoch,
+  error:e=>{message(errorText(e),true);if(["ADMIN_FORBIDDEN","AUTH_REQUIRED","INVALID_SESSION"].includes(e.message))reset();}};
+}
+function renderRuntime(management){
+ const data=management.base_values??management;
  if(!Number.isInteger(data.free_monthly_publication_limit))throw Error("SERVICE_NOT_DEPLOYED");
  const c=card("Configuración remota"),form=node("div",undefined,"grid-form");
  const mode=select(form,"Monetización",[["FREE_ALL","Gratis · sin monetización"],["PARTIAL","Parcial · plan gratuito"],["FINAL","Completa · Free y Premium"]],data.monetization_mode);
@@ -118,8 +137,13 @@ function renderRuntime(data){
  const limit=field(form,"Máximo de grupos del plan gratuito","number",data.free_group_limit);limit.min=0;limit.max=10000;
  const publications=field(form,"Publicaciones por mes del plan gratuito (UTC)","number",data.free_monthly_publication_limit);publications.min=0;publications.max=10000;
  const flags={};
- for(const [key,title] of [["ads_enabled","Publicidad discreta"],["banner_enabled","Espacio de banner"],["support_enabled","Apoyo voluntario"],["premium_purchase_enabled","Compra Premium"],["analytics_enabled","Métricas opcionales"],["translations_enabled","Traducciones"],["maintenance_mode","Mantenimiento"]])
+ for(const [key,title] of [["public_feed_enabled","Publicaciones en Comunidad"],["feedback_enabled","Sugerencias y soporte"],["referrals_enabled","Invitaciones por enlace"],["share_cards_enabled","Tarjetas para compartir"],["review_prompt_enabled","Invitación a valorar"],["church_program_enabled","Programa de comunidades"],["ads_enabled","Publicidad discreta"],["banner_enabled","Espacio de banner"],["support_enabled","Apoyo voluntario"],["premium_purchase_enabled","Compra Premium"],["analytics_enabled","Métricas opcionales"],["translations_enabled","Traducciones"],["maintenance_mode","Mantenimiento"]])
   flags[key]=check(form,title,data[key]);
+ let operational=null;
+ if(Array.isArray(data.enabled_themes)){
+  for(const [key,title] of [["groups_enabled","Publicación y entrada a grupos"],["announcements_enabled","Avisos oficiales"],["custom_backgrounds_enabled","Fondos personalizados"]])flags[key]=check(form,title,data[key]);
+  operational=operationalControls(form,data,management,operationContext());
+ }
  c.append(node("p","FREE_ALL mantiene invisible toda monetización. Cambiar el modo no configura pagos ni anuncios: cada proveedor debe estar listo. La fase y las opciones remotas siguen controlando la disponibilidad.","notice"),form);
  const version=field(c,"Versión mínima (vacía = sin bloqueo)","text",data.minimum_supported_version??"");version.maxLength=30;
  const recommended=field(c,"Versión recomendada","text",data.recommended_version??"");recommended.maxLength=30;
@@ -129,8 +153,10 @@ function renderRuntime(data){
   action(()=>api.rpc("admin_set_runtime_config",{p_expected_updated_at:data.updated_at,p_patch:{
    monetization_mode:mode.value,rollout_phase:phase.value,free_group_limit:n,free_monthly_publication_limit:monthly,
    minimum_supported_version:version.value.trim()||null,recommended_version:recommended.value.trim()||null,
+   ...(operational?.readPatch()??{}),
    ...Object.fromEntries(Object.entries(flags).map(([k,v])=>[k,v.checked]))}}));
  },""));$("panel").append(c);
+ if(operational)$("panel").append(operational.schedule);
 }
 function renderUsers(data,area){
  const panel=$("panel"),search=node("div",undefined,"toolbar"),form=node("form"),label=node("label","Buscar por correo, nombre o UUID"),query=node("input");query.type="search";query.maxLength=120;label.append(query);form.append(label,button("Buscar",()=>form.requestSubmit()));
