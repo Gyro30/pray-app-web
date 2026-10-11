@@ -65,6 +65,10 @@ const errorMessages={
  REPORT_NO_LONGER_PENDING:"Este caso ya no está pendiente. Actualiza la lista.",
  SESSION_CHANGED:"La sesión cambió. Vuelve a ingresar.",
  CONFIRMATION_REQUIRED:"Escribe exactamente la confirmación solicitada.",
+ SCHEDULE_INVALID:"Revisa el período y los valores seleccionados.",SCHEDULE_CONFLICT:"Ya existe un período que cambia la misma función en esas fechas. Cancélalo o cambia las fechas.",
+ SCHEDULE_LIMIT:"Se alcanzó el máximo de períodos activos o futuros.",SCHEDULE_NOT_FOUND:"Ese período ya no existe. Actualiza la página.",
+ ANNOUNCEMENT_INVALID:"Revisa el título, mensaje y fechas del aviso.",ANNOUNCEMENT_NOT_FOUND:"Ese aviso ya no existe. Actualiza la página.",
+ MODERATION_CONTEXT_REQUIRED:"Abre el historial desde un caso denunciado.",RUNTIME_CONFIG_INVALID:"Revisa los valores de configuración.",
  INVALID_PERMISSIONS:"Revisa los permisos seleccionados.",USER_NOT_FOUND:"No encontramos esta cuenta."
 };
 export const errorText=error=>errorMessages[error?.message]??(error?.name==="AbortError"?"La solicitud tardó demasiado. Intenta nuevamente.":"No se pudo completar la acción. Revisa los datos e intenta nuevamente.");
