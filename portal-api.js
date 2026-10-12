@@ -52,6 +52,7 @@ const errorMessages={
  ADMIN_FORBIDDEN:"Tu cuenta no tiene permiso para esta acción.",OWNER_REQUIRED:"Solo el propietario puede realizar esta acción.",
  OWNER_PROTECTED:"La cuenta propietaria está protegida.",STAFF_PROTECTED:"Esta cuenta administrativa está protegida.",
  SERVICE_NOT_DEPLOYED:"El servicio aún no está habilitado. Puedes usar el correo de soporte.",
+ EMAIL_DELETION_DISABLED:"La eliminación automática por código aún no está habilitada. Puedes solicitar la eliminación por correo sin instalar la app.",
  SERVICE_UNAVAILABLE:"El servicio no está disponible temporalmente. Intenta nuevamente.",
  RATE_LIMITED:"Demasiados intentos. Espera unos minutos.",INVALID_EMAIL:"Escribe un correo válido.",
  INVALID_CODE:"Escribe el código recibido por correo.",INVALID_OR_EXPIRED_CODE:"El código no es válido, venció o alcanzó el límite de intentos. Solicita uno nuevo.",
