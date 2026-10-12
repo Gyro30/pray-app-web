@@ -1,14 +1,20 @@
 import {config} from "./config.js";
 import {PortalApi,errorText} from "./portal-api.js";
 const api=new PortalApi(config),$=id=>document.getElementById(id);
+const unavailable=new Set(["EMAIL_DELETION_DISABLED","SERVICE_NOT_DEPLOYED","SERVICE_UNAVAILABLE"]);
 let challenge=null,ticket=null,email="",busy=false,epoch=0;
 const message=(text,error=false)=>{$("deletion-status").textContent=text;$("deletion-status").dataset.error=String(error);};
 function start(){epoch++;api.clear();challenge=null;ticket=null;email="";$("code").value="";$("delete-confirm").value="";
- $("request-form").hidden=false;$("verify-form").hidden=true;$("confirm-form").hidden=true;$("restart").hidden=true;}
+ $("request-form").hidden=false;$("verify-form").hidden=true;$("confirm-form").hidden=true;$("restart").hidden=true;$("deletion-help").hidden=true;}
 async function run(fn){
  if(busy)return;busy=true;const current=epoch;
  for(const b of $("email-deletion").querySelectorAll("button"))b.disabled=true;
- try{await fn(current);}catch(e){if(current===epoch)message(errorText(e),true);}
+ try{$("deletion-help").hidden=true;await fn(current);}catch(e){if(current===epoch){
+  $("deletion-help").hidden=!unavailable.has(e?.message);
+  message(e?.message==="SERVICE_UNAVAILABLE"
+   ?"No podemos completar la eliminación automática por código en este momento. Puedes solicitar la eliminación por correo sin instalar la app."
+   :errorText(e),true);
+ }}
  finally{busy=false;for(const b of $("email-deletion").querySelectorAll("button"))b.disabled=false;}
 }
 $("request-form").addEventListener("submit",e=>{
