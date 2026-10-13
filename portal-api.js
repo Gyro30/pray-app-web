@@ -51,8 +51,8 @@ const errorMessages={
  AUTH_REQUIRED:"Inicia sesión para continuar.",INVALID_SESSION:"La sesión venció. Vuelve a ingresar.",
  ADMIN_FORBIDDEN:"Tu cuenta no tiene permiso para esta acción.",OWNER_REQUIRED:"Solo el propietario puede realizar esta acción.",
  OWNER_PROTECTED:"La cuenta propietaria está protegida.",STAFF_PROTECTED:"Esta cuenta administrativa está protegida.",
- SERVICE_NOT_DEPLOYED:"El servicio aún no está habilitado. Puedes usar el correo de soporte.",
- EMAIL_DELETION_DISABLED:"La eliminación automática por código aún no está habilitada. Puedes solicitar la eliminación por correo sin instalar la app.",
+ SERVICE_NOT_DEPLOYED:"El servicio aún no está habilitado. Consulta la página de soporte.",
+ EMAIL_DELETION_DISABLED:"La eliminación automática por código aún no está habilitada. Puedes eliminar tu cuenta desde Ajustes de Pray o consultar la página de soporte.",
  SERVICE_UNAVAILABLE:"El servicio no está disponible temporalmente. Intenta nuevamente.",
  RATE_LIMITED:"Demasiados intentos. Espera unos minutos.",INVALID_EMAIL:"Escribe un correo válido.",
  INVALID_CODE:"Escribe el código recibido por correo.",INVALID_OR_EXPIRED_CODE:"El código no es válido, venció o alcanzó el límite de intentos. Solicita uno nuevo.",
@@ -70,6 +70,10 @@ const errorMessages={
  SCHEDULE_LIMIT:"Se alcanzó el máximo de períodos activos o futuros.",SCHEDULE_NOT_FOUND:"Ese período ya no existe. Actualiza la página.",
  ANNOUNCEMENT_INVALID:"Revisa el título, mensaje y fechas del aviso.",ANNOUNCEMENT_NOT_FOUND:"Ese aviso ya no existe. Actualiza la página.",
  MODERATION_CONTEXT_REQUIRED:"Abre el historial desde un caso denunciado.",RUNTIME_CONFIG_INVALID:"Revisa los valores de configuración.",
- INVALID_PERMISSIONS:"Revisa los permisos seleccionados.",USER_NOT_FOUND:"No encontramos esta cuenta."
+ INVALID_PERMISSIONS:"Revisa los permisos seleccionados.",USER_NOT_FOUND:"No encontramos esta cuenta.",
+ FEATURE_DISABLED:"El envío de solicitudes está pausado temporalmente. Puedes consultar las respuestas existentes.",
+ FEEDBACK_KIND_INVALID:"Selecciona el tipo de solicitud.",FEEDBACK_SUBJECT_INVALID:"El asunto debe tener entre 1 y 120 caracteres.",
+ FEEDBACK_MESSAGE_INVALID:"El mensaje debe tener entre 1 y 3000 caracteres.",FEEDBACK_ACTION_INVALID:"Selecciona una acción válida.",
+ MODERATOR_REQUIRED:"Tu cuenta no tiene permiso para revisar solicitudes.",TEXT_TOO_LONG:"El texto supera la longitud permitida."
 };
 export const errorText=error=>errorMessages[error?.message]??(error?.name==="AbortError"?"La solicitud tardó demasiado. Intenta nuevamente.":"No se pudo completar la acción. Revisa los datos e intenta nuevamente.");
