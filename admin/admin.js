@@ -3,7 +3,7 @@ import {PortalApi,errorText} from "../portal-api.js";
 import {renderCases,operationalControls,renderAnnouncements} from "./admin-operations.js";
 const api=new PortalApi(config),$=id=>document.getElementById(id);
 let access=null,section=null,generation=0,lastActivity=Date.now(),busy=false;
-const labels={moderation:"Revisiones",analytics:"Métricas",runtime:"Configuración",users:"Usuarios",premium_grants:"Premium",access:"Permisos",audit:"Actividad",announcements:"Avisos"};
+const labels={moderation:"Revisiones",analytics:"Métricas",runtime:"Configuración",users:"Usuarios",premium_grants:"Premium",access:"Permisos",audit:"Actividad",announcements:"Avisos",feedback:"Soporte"};
 const permissions={moderation:"Revisar denuncias",analytics:"Ver analíticas",runtime:"Cambiar configuración",users:"Suspender y eliminar usuarios",premium_grants:"Conceder Premium perpetuo",announcements:"Publicar avisos oficiales"};
 const can=p=>access?.is_owner||access?.permissions.includes(p);
 const message=(text,error=false)=>{$("status").textContent=text;$("status").dataset.error=String(error);};
@@ -21,6 +21,7 @@ function reset(){
 }
 function tabs(){
  const available=Object.keys(permissions).filter(can);
+ if(can("moderation"))available.push("feedback");
  if(access.is_owner)available.push("access","audit");
  if(!available.includes(section))section=available[0];
  $("tabs").replaceChildren();
@@ -51,6 +52,7 @@ async function load(id){
    catch(e){if(e.message!=="SERVICE_NOT_DEPLOYED")throw e;data=await api.rpc("get_runtime_config");}
   }
   else if(area==="announcements")data=await api.rpc("admin_get_announcements");
+  else if(area==="feedback")data=await api.rpc("get_feedback_moderation_queue");
   else if(area==="audit")data=await api.rpc("admin_get_audit");
   else data=await api.rpc("admin_find_users");
   if(current!==generation)return;
@@ -60,6 +62,7 @@ async function load(id){
    else renderCases(data,operationContext(current));
   }
   else if(area==="announcements")renderAnnouncements(data,operationContext(current));
+  else if(area==="feedback")renderFeedback(data);
   else if(area==="analytics")renderMetrics(data);
   else if(area==="runtime")renderRuntime(data);
   else if(area==="audit")renderAudit(data);
@@ -195,6 +198,25 @@ function userCard(user,area){
    action(async()=>{await api.refresh();await api.request("/functions/v1/admin-portal",{action:"delete_user",user_id:user.id,confirmation:value});});
   },"danger"));c.append(row);
  }return c;
+}
+function renderFeedback(data){
+ const panel=$("panel"),states={new:"Recibida",in_review:"En revisión",resolved:"Resuelta",closed:"Cerrada"};
+ panel.append(node("h2","Solicitudes de soporte"),node("p","Las solicitudes y respuestas se guardan en Pray. No se envían a una bandeja de correo.","notice"));
+ if(!Array.isArray(data))throw Error("REQUEST_FAILED");
+ if(!data.length)panel.append(node("p","No hay solicitudes pendientes.","muted"));
+ for(const item of data){
+  const c=card(item.subject);c.append(node("p",(item.display_name||"Cuenta de Pray")+" · "+(states[item.status]??item.status)+" · "+date(item.created_at),"muted"),node("p",item.message,"case-text"));
+  const label=node("label","Respuesta para la persona"),reply=node("textarea");reply.maxLength=2000;reply.value=item.admin_reply??"";label.append(reply);c.append(label);
+  const row=node("div",undefined,"actions");
+  for(const [value,title] of [["review","Marcar en revisión"],["resolve","Responder y resolver"],["close","Cerrar solicitud"]]){
+   row.append(button(title,()=>action(async()=>{
+    if(value==="resolve"&&!reply.value.trim())throw Error("FEEDBACK_MESSAGE_INVALID");
+    if(value==="close"&&!confirm("Cerrar esta solicitud?"))return;
+    const result=await api.rpc("moderate_feedback",{p_feedback_id:item.id,p_action:value,p_reply:reply.value.trim()||null});
+    if(result!==true)throw Error("REPORT_NO_LONGER_PENDING");
+   })));
+  }c.append(row);panel.append(c);
+ }
 }
 function renderAudit(data){
  $("panel").append(node("h2","Actividad administrativa"),node("p","Últimas 50 acciones. Este registro no contiene oraciones, correos ni códigos de acceso.","notice"));
