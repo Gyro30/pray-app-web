@@ -12,7 +12,7 @@ async function run(fn){
  try{$("deletion-help").hidden=true;await fn(current);}catch(e){if(current===epoch){
   $("deletion-help").hidden=!unavailable.has(e?.message);
   message(e?.message==="SERVICE_UNAVAILABLE"
-   ?"No podemos completar la eliminación automática por código en este momento. Puedes solicitar la eliminación por correo sin instalar la app."
+   ?"No podemos completar la eliminación automática por código en este momento. Puedes eliminar tu cuenta desde Ajustes de Pray o consultar la página de soporte."
    :errorText(e),true);
  }}
  finally{busy=false;for(const b of $("email-deletion").querySelectorAll("button"))b.disabled=false;}
