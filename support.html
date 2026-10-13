@@ -1,14 +1,28 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Ponte en contacto con Jerónimo Sánchez para resolver problemas con Pray.">
-<meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="description" content="Envía sugerencias, quejas y solicitudes, y consulta las respuestas de Pray desde esta página.">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src https://duhfkkohhesiagwwzpqc.supabase.co; base-uri 'none'; form-action 'none'; object-src 'none'">
 <title>Pray — Ayuda y soporte</title><link rel="icon" type="image/png" href="pray-icon.png"><link rel="stylesheet" href="legal.css">
-</head><body><a class="skip" href="#contenido">Saltar al contenido</a>
+<link rel="stylesheet" href="support.css"><script type="module" src="support.js"></script></head><body><a class="skip" href="#contenido">Saltar al contenido</a>
 <header class="site-header"><a class="brand" href="index.html"><img src="pray-icon.png" width="44" height="44" alt=""><span>Pray<small>Privacidad y ayuda</small></span></a>
 <nav aria-label="Navegación principal"><a href="privacy.html">Privacidad</a><a href="support.html" aria-current="page">Soporte</a><a class="nav-delete" href="account-deletion.html">Eliminar cuenta</a></nav></header><main id="contenido" class="document"><p class="eyebrow">Ayuda y soporte</p><h1>Soporte de Pray</h1>
-<p>Para sugerencias, quejas o solicitudes usa el canal interno de Pray. Si no puedes entrar, escribe a <a href="mailto:prayapp.attention@gmail.com">prayapp.attention@gmail.com</a>.</p>
-<p>Incluye versión de Pray, modelo del dispositivo y versión de Android. Nunca envíes contraseñas, códigos de recuperación, tokens, claves de Supabase ni otras credenciales.</p>
-<p>Seguridad comunitaria y menores: <a href="mailto:prayapp.attention@gmail.com">prayapp.attention@gmail.com</a>.</p>
-</main><footer class="site-footer"><div><strong>Pray</strong><p>Jerónimo Sánchez · Perú<br><a href="mailto:prayapp.attention@gmail.com">prayapp.attention@gmail.com</a></p></div>
+<p>Envía sugerencias, quejas y solicitudes desde esta página o desde el canal de ayuda de Pray. Las respuestas aparecerán en <strong>Mis solicitudes</strong>; no necesitas enviar un correo al desarrollador.</p>
+<p>Para <a href="account-deletion.html">eliminar tu cuenta</a>, utiliza el formulario de código y confirma el borrado. Las denuncias de publicaciones se envían desde su menú de seguridad en Pray.</p>
+<section id="support-portal" hidden>
+<p id="support-status" role="status" aria-live="polite"></p>
+<section id="support-login" class="request-box"><h2>Accede a tu espacio de ayuda</h2>
+<p>Utiliza el correo y la contraseña de tu cuenta de Pray. No necesitas instalar la aplicación.</p>
+<form id="support-login-form"><label>Correo de tu cuenta<input id="support-email" type="email" autocomplete="username" maxlength="254" required></label>
+<label>Contraseña de Pray<input id="support-password" type="password" autocomplete="current-password" required></label><button type="submit">Ingresar</button></form>
+<p class="small">Tu sesión permanece solo en esta pestaña y se cierra tras 15 minutos sin actividad.</p></section>
+<div id="support-workspace" hidden><div class="support-toolbar"><h2>Tu espacio de ayuda</h2><button id="support-logout" type="button" class="secondary" hidden>Cerrar sesión</button></div>
+<form id="support-form" class="request-box"><label for="support-kind">Tipo de solicitud</label><select id="support-kind"><option value="suggestion">Sugerencia</option><option value="complaint">Queja</option><option value="request">Solicitud</option></select>
+<label>Asunto<input id="support-subject" maxlength="120" required></label><label>Mensaje<textarea id="support-message" maxlength="3000" required></textarea></label>
+<p class="small">Si reportas un problema, incluye versión de Pray, modelo y versión de Android. Nunca incluyas contraseñas, códigos, tokens ni motivos privados.</p>
+<button type="submit">Enviar solicitud</button></form>
+<div class="support-toolbar"><h2>Mis solicitudes</h2><button id="support-refresh" type="button" class="secondary">Actualizar solicitudes</button></div>
+<div id="support-history"></div></div></section>
+<noscript><p>Activa JavaScript para utilizar el formulario. También puedes enviar solicitudes desde el canal de ayuda de Pray.</p></noscript>
+</main><footer class="site-footer"><div><strong>Pray</strong><p>Jerónimo Sánchez · Perú<br><a href="support.html">Ayuda y solicitudes</a></p></div>
 <nav aria-label="Información legal"><a href="terms.html">Términos de uso</a><a href="community-guidelines.html">Reglas de comunidad</a><a href="child-safety.html">Seguridad de menores</a></nav></footer></body></html>
