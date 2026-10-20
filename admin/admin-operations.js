@@ -112,22 +112,75 @@ function caseCard(item,c){
 }
 
 export function renderAnnouncements(rows,c){
- const panel=c.panel;panel.append(c.node("h2","Avisos para toda la comunidad"),c.node("p","Estos mensajes son públicos y aparecen como avisos oficiales en Comunidad. Incluye solo información que pueda leer cualquier persona.","notice"));
- const editor=c.card("Nuevo aviso"),title=c.field(editor,"Título del aviso");title.maxLength=120;
- const label=c.node("label","Mensaje público"),body=c.node("textarea");body.maxLength=4000;body.rows=5;label.append(body);editor.append(label);
- const start=c.field(editor,"Publicar desde","datetime-local",localInput(Date.now()));
- const end=c.field(editor,"Retirar el (opcional)","datetime-local");let editing=null;
- const save=(enabled)=>{
-  if(!title.value.trim()||!body.value.trim()){c.message("Completa el título y el mensaje.",true);return;}
-  const times=dates(start,end,c);if(!times)return;
-  if(enabled&&!confirm("Publicar este aviso para toda la comunidad desde la fecha indicada?"))return;
-  c.action(()=>c.api.rpc("admin_save_announcement",{p_id:editing,p_title:title.value.trim(),p_body:body.value.trim(),p_starts_at:times[0],p_ends_at:times[1],p_enabled:enabled}));
+ const pinRpc=async(name,args)=>{
+  try{return await c.api.rpc(name,args);}
+  catch(e){if(e.message==="SERVICE_NOT_DEPLOYED")throw Error("COMMUNITY_PINS_UPDATE_REQUIRED");throw e;}
  };
- const actions=c.node("div",undefined,"actions");actions.append(c.button("Guardar borrador",()=>save(false)),c.button("Publicar o programar aviso",()=>save(true),""));editor.append(actions);panel.append(editor);
+ const panel=c.panel;panel.append(c.node("h2","Destacados de Comunidad"),c.node("p","Fija un aviso oficial o un motivo que ya sea público. Elige hasta cuándo debe aparecer y si se oculta para cada persona después de leerlo. No se muestran motivos privados, denunciados o retirados.","notice"));
+ const editor=c.card("Nuevo destacado"),kind=c.select(editor,"Qué quieres destacar",[["message","Mensaje oficial"],["prayer","Motivo público existente"]],"message");
+ const messageFields=c.node("div");editor.append(messageFields);
+ const title=c.field(messageFields,"Título del aviso");title.maxLength=120;
+ const label=c.node("label","Mensaje público"),body=c.node("textarea");body.maxLength=4000;body.rows=5;label.append(body);messageFields.append(label);
+ const prayerFields=c.node("div");prayerFields.hidden=true;editor.append(prayerFields);
+ const search=c.field(prayerFields,"Buscar un motivo por título o texto");search.maxLength=200;
+ const selectedLabel=c.node("p","Selecciona un motivo público.","notice"),results=c.node("div",undefined,"pin-candidates");
+ const searchStatus=c.node("p","","small");searchStatus.setAttribute("role","status");prayerFields.append(selectedLabel);
+ let selectedPrayer=null,selectedPrayerTitle="",searchGeneration=0,searchOffset=0,hasSearched=false;
+ const find=async(append=false)=>{
+  const current=++searchGeneration,offset=append?searchOffset:0;hasSearched=true;searchButton.disabled=true;more.disabled=true;
+  if(!append)results.replaceChildren();searchStatus.textContent="Buscando motivos públicos…";
+  try{
+   const candidates=await pinRpc("admin_find_pinnable_prayers",{p_search:search.value.trim(),p_limit:20,p_offset:offset});
+   if(!c.isCurrent()||current!==searchGeneration)return;
+   for(const item of candidates){
+    const row=c.node("div",undefined,"pin-candidate");row.append(c.node("strong",item.title),c.node("p",item.preview,"case-text"),c.node("p",item.display_name+" · "+c.date(item.date),"small"));
+    row.append(c.button("Destacar este motivo",()=>{selectedPrayer=item.id;selectedPrayerTitle=item.title;selectedLabel.textContent="Seleccionado: "+item.title;}));results.append(row);
+   }
+   searchOffset=offset+candidates.length;more.hidden=candidates.length<20;searchStatus.textContent=results.children.length?"Solo se incluyen publicaciones públicas disponibles.":"No se encontraron motivos públicos disponibles.";
+  }catch(e){if(c.isCurrent()&&current===searchGeneration){searchStatus.textContent="No se pudo cargar la búsqueda.";c.error(e);}}
+  finally{if(c.isCurrent()&&current===searchGeneration){searchButton.disabled=false;more.disabled=false;}}
+ };
+ const searchButton=c.button("Buscar motivos",()=>find()),more=c.button("Cargar más",()=>find(true));more.hidden=true;
+ prayerFields.append(searchButton,searchStatus,results,more);search.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();find();}});
+ const changeKind=()=>{messageFields.hidden=kind.value!=="message";prayerFields.hidden=kind.value!=="prayer";if(kind.value==="prayer"&&!hasSearched)find();};
+ kind.addEventListener("change",changeKind);
+ const start=c.field(editor,"Publicar desde","datetime-local",localInput(Date.now()));
+ const duration=c.select(editor,"Tiempo destacado",[["3600000","1 hora"],["21600000","6 horas"],["86400000","24 horas"],["604800000","7 días"],["custom","Hasta una fecha"],["indefinite","Sin fecha de fin"]],"86400000");
+ const end=c.field(editor,"Retirar el","datetime-local");end.parentElement.hidden=true;
+ duration.addEventListener("change",()=>{end.parentElement.hidden=duration.value!=="custom";});
+ const afterRead=c.select(editor,"Después de leerlo",[["false","Mantenerlo fijo"],["true","Ocultarlo al leer"]],"false");
+ editor.append(c.node("p","Las fechas usan la zona horaria de este navegador. El servidor controla el inicio y el fin. Si cambias el contenido, vuelve a aparecer para quienes habían leído la versión anterior.","small"));
+ let editing=null;
+ const payload=(enabled)=>{
+  if(kind.value==="message"&&(!title.value.trim()||!body.value.trim())){c.message("Completa el título y el mensaje.",true);return null;}
+  if(kind.value==="prayer"&&!selectedPrayer){c.message("Selecciona un motivo público para destacar.",true);return null;}
+  if(duration.value==="custom"&&!end.value){c.message("Elige la fecha de fin del destacado.",true);return null;}
+  if(duration.value!=="custom")end.value=duration.value==="indefinite"?"":Number.isFinite(new Date(start.value).getTime())?localInput(new Date(start.value).getTime()+Number(duration.value)):"";
+  const times=dates(start,end,c);if(!times)return null;
+  return {p_id:editing,p_kind:kind.value,p_title:kind.value==="message"?title.value.trim():null,p_body:kind.value==="message"?body.value.trim():null,
+   p_intention_id:kind.value==="prayer"?selectedPrayer:null,p_starts_at:times[0],p_ends_at:times[1],p_hide_after_read:afterRead.value==="true",p_enabled:enabled};
+ };
+ const save=(enabled)=>{
+  const data=payload(enabled);if(!data)return;
+  if(enabled&&!confirm("Destacar "+(kind.value==="prayer"?"«"+selectedPrayerTitle+"»":"este mensaje")+" para toda la comunidad desde la fecha indicada?"))return;
+  c.action(()=>pinRpc("admin_save_community_pin",data));
+ };
+ const actions=c.node("div",undefined,"actions");actions.append(c.button("Guardar borrador",()=>save(false)),c.button("Fijar o programar",()=>save(true),""));editor.append(actions);panel.append(editor);
  for(const row of rows){
-  const card=c.card(row.title);card.append(c.node("p",row.body,"case-text"),c.node("p",row.enabled?(new Date(row.starts_at)>Date.now()?"Programado":row.ends_at&&new Date(row.ends_at)<=Date.now()?"Finalizado":"Publicado"):"Borrador / retirado","muted"),c.node("p",c.date(row.starts_at)+(row.ends_at?" → "+c.date(row.ends_at):""),"small"));
-  card.append(c.button("Editar",()=>{editing=row.id;title.value=row.title;body.value=row.body;start.value=localInput(row.starts_at);end.value=row.ends_at?localInput(row.ends_at):"";editor.querySelector("h3").textContent="Editar aviso";title.focus();}));
-  if(row.enabled)card.append(c.button("Retirar aviso",()=>{if(confirm("Retirar este aviso de Comunidad?"))c.action(()=>c.api.rpc("admin_save_announcement",{p_id:row.id,p_title:row.title,p_body:row.body,p_starts_at:row.starts_at,p_ends_at:row.ends_at,p_enabled:false}));},"danger"));
+  const isPrayer=row.kind==="prayer",card=c.card(isPrayer?(row.intention_title||"Motivo destacado no disponible"):row.title);
+  if(!isPrayer)card.append(c.node("p",row.body,"case-text"));
+  card.append(c.node("p",row.enabled?(new Date(row.starts_at)>Date.now()?"Programado":row.ends_at&&new Date(row.ends_at)<=Date.now()?"Finalizado":"Fijado en Comunidad"):"Borrador / retirado","muted"),
+   c.node("p",c.date(row.starts_at)+(row.ends_at?" → "+c.date(row.ends_at):" · Sin fecha de fin"),"small"),
+   c.node("p",row.hide_after_read?"Se oculta después de leerlo.":"Permanece fijo después de leerlo.","small"));
+  if(isPrayer&&row.intention_available===false)card.append(c.node("p","Este motivo está oculto o dejó de ser público. El destacado también permanece oculto; no se volverá a publicar por estar fijado.","notice"));
+  card.append(c.button("Editar",()=>{
+   searchGeneration++;searchButton.disabled=false;more.disabled=false;editing=row.id;kind.value=row.kind||"message";title.value=row.title;body.value=row.body;selectedPrayer=row.intention_id||null;selectedPrayerTitle=row.intention_title||"Motivo destacado";
+   selectedLabel.textContent=selectedPrayer?"Seleccionado: "+selectedPrayerTitle:"Selecciona un motivo público.";
+   start.value=localInput(row.starts_at);end.value=row.ends_at?localInput(row.ends_at):"";duration.value=row.ends_at?"custom":"indefinite";end.parentElement.hidden=!row.ends_at;
+   afterRead.value=String(!!row.hide_after_read);editor.querySelector("h3").textContent="Editar destacado";changeKind();kind.focus();editor.scrollIntoView({block:"start",behavior:"smooth"});
+  }));
+  if(row.enabled)card.append(c.button("Retirar destacado",()=>{if(confirm("Retirar este destacado de Comunidad?"))c.action(()=>pinRpc("admin_save_community_pin",{
+   p_id:row.id,p_kind:row.kind||"message",p_title:row.title,p_body:row.body,p_intention_id:row.intention_id||null,p_starts_at:row.starts_at,p_ends_at:row.ends_at,p_hide_after_read:!!row.hide_after_read,p_enabled:false}));},"danger"));
   panel.append(card);
  }
 }

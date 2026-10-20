@@ -4,7 +4,7 @@ import {renderCases,operationalControls,renderAnnouncements} from "./admin-opera
 const api=new PortalApi(config),$=id=>document.getElementById(id);
 let access=null,section=null,generation=0,lastActivity=Date.now(),busy=false;
 const labels={moderation:"Revisiones",analytics:"Métricas",runtime:"Configuración",users:"Usuarios",premium_grants:"Premium",access:"Permisos",audit:"Actividad",announcements:"Avisos",feedback:"Soporte"};
-const permissions={moderation:"Revisar denuncias",analytics:"Ver analíticas",runtime:"Cambiar configuración",users:"Suspender y eliminar usuarios",premium_grants:"Conceder Premium perpetuo",announcements:"Publicar avisos oficiales"};
+const permissions={moderation:"Revisar denuncias",analytics:"Ver analíticas",runtime:"Cambiar configuración",users:"Suspender y eliminar usuarios",premium_grants:"Conceder Premium perpetuo",announcements:"Publicar avisos y fijar motivos públicos"};
 const can=p=>access?.is_owner||access?.permissions.includes(p);
 const message=(text,error=false)=>{$("status").textContent=text;$("status").dataset.error=String(error);};
 function node(tag,text,className){const n=document.createElement(tag);if(text!==undefined)n.textContent=String(text);if(className)n.className=className;return n;}
